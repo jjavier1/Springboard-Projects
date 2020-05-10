@@ -26,12 +26,12 @@ exploring the data, and getting acquainted with the 3 tables. */
 
 /* Q1: Some of the facilities charge a fee to members, but some do not.
 Please list the names of the facilities that do. */
-SELECT name 
+SELECT name
 FROM Facilities 
 WHERE membercost > 0
 
 /* Q2: How many facilities do not charge a fee to members? */
-SELECT COUNT(name) 
+SELECT COUNT(name)
 FROM Facilities 
 WHERE membercost = 0
 
@@ -47,27 +47,40 @@ WHERE membercost < (0.2 * monthlymaintenance)
 Write the query without using the OR operator. */
 SELECT *
 FROM Facilities
-WHERE NOT (id != 1 AND id != 5) /* check in console*/
+WHERE NOT (facid != 1 AND facid != 5)
 
 /* Q5: How can you produce a list of facilities, with each labelled as
 'cheap' or 'expensive', depending on if their monthly maintenance cost is
 more than $100? Return the name and monthly maintenance of the facilities
 in question. */
-SELECT *
+SELECT name, monthlymaintenance,
        CASE WHEN monthlymaintenance > 100 THEN 'expensive'
             ELSE 'cheap' END AS maintenanceCategory
-FROM Facilities /* check in console*/
+FROM Facilities 
 
 /* Q6: You'd like to get the first and last name of the last member(s)
 who signed up. Do not use the LIMIT clause for your solution. */
-				///*USE JOINS*/
 
+
+/* specify number of rows? currently based on last month of joindate*/
+SELECT firstname, surname
+FROM Members
+WHERE joindate LIKE '2012-09%'     
+ORDER BY memid DESC 		   
+
+ 
 /* Q7: How can you produce a list of all members who have used a tennis court?
 Include in your output the name of the court, and the name of the member
 formatted as a single column. Ensure no duplicate data, and order by
 the member name. */
-				///*USE JOINS*/
-
+				
+SELECT DISTINCT Facilities.name AS court_name,
+       CONCAT(Members.firstname,' ',Members.surname) AS member_name
+FROM Bookings
+INNER JOIN Facilities ON Bookings.facid = Facilities.facid 
+INNER JOIN Members ON Bookings.memid = Members.memid 
+WHERE Bookings.facid = 0 OR Bookings.facid = 1
+ORDER BY Bookings.facid 
 
 /* Q8: How can you produce a list of bookings on the day of 2012-09-14 which
 will cost the member (or guest) more than $30? Remember that guests have
@@ -75,15 +88,48 @@ different costs to members (the listed costs are per half-hour 'slot'), and
 the guest user's ID is always 0. Include in your output the name of the
 facility, the name of the member formatted as a single column, and the cost.
 Order by descending cost, and do not use any subqueries. */
-
-				///*USE JOINS*/
+			
+SELECT Facilities.name AS fac_name, 
+	CONCAT( Members.firstname, ' ', Members.surname ) AS member_name,
+	CASE WHEN Bookings.memid > 0 THEN SUM(Facilities.membercost*Bookings.slots)
+	     ELSE SUM(Facilities.guestcost*Bookings.slots) END AS cost
+FROM Bookings
+INNER JOIN Facilities ON Bookings.facid = Facilities.facid
+INNER JOIN Members ON Bookings.memid = Members.memid 
+WHERE Bookings.starttime LIKE '2012-09-14%'
+GROUP BY fac_name, member_name
+HAVING cost > 30
+ORDER BY cost DESC
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
-				
+
+SELECT
+	Facilities.name AS fac_name, 
+	CONCAT( Members.firstname, ' ', Members.surname ) AS member_name,
+	CASE WHEN sub.memid > 0 THEN SUM(Facilities.membercost*sub.slots)
+	     ELSE SUM(Facilities.guestcost*sub.slots) END AS cost
+FROM (
+	Select *
+	FROM Bookings
+	WHERE starttime LIKE '2012-09-14%'
+      ) sub
+
+INNER JOIN Facilities ON sub.facid = Facilities.facid
+INNER JOIN Members ON sub.memid = Members.memid 
+GROUP BY fac_name, member_name
+HAVING cost > 30
+ORDER BY cost DESC		
 
 /* Q10: Produce a list of facilities with a total revenue less than 1000.
 The output of facility name and total revenue, sorted by revenue. Remember
 that there's a different cost for guests and members! */
-
-
+SELECT Facilities.name AS fac_name, 
+	CASE WHEN Bookings.memid > 0 THEN SUM(Facilities.membercost*Bookings.slots)
+	     ELSE SUM(Facilities.guestcost*Bookings.slots) END AS revenue
+FROM Bookings
+INNER JOIN Facilities ON Bookings.facid = Facilities.facid
+INNER JOIN Members ON Bookings.memid = Members.memid 
+GROUP BY fac_name
+HAVING revenue < 1000
+ORDER BY revenue
 
