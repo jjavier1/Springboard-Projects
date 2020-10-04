@@ -1,6 +1,6 @@
 # Springboard-Projects
 
-This repository contains all the files for the following projects
+This repository contains all the files for the following projects:
 
 • Capstone 1 - Super Zips Extension: This project models which areas of the U.S. are becoming more or less impoverished and educated over time using descriptive statistics, exploratory data analysis, and K-Means Clustering.
 
